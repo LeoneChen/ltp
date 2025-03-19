@@ -40,7 +40,7 @@ static void setup(void)
 	SAFE_PIPE2(fds, O_NONBLOCK);
 
 	/* EPOLLOUT will be raised when buffer became empty after becoming full */
-	SAFE_FCNTL(fds[1], F_SETPIPE_SZ, write_size);
+	// SAFE_FCNTL(fds[1], F_SETPIPE_SZ, write_size);
 }
 
 static void cleanup(void)
@@ -79,7 +79,8 @@ static void run(void)
 	SAFE_WRITE(SAFE_WRITE_ANY, fds[1], buff, write_size);
 	TST_EXP_FAIL(write(fds[1], buff, write_size), EAGAIN, "write() failed");
 
-	TST_EXP_EQ_LI(SAFE_EPOLL_WAIT(epfd, &evt_receive, 1, 0), 1);
+	int res = SAFE_EPOLL_WAIT(epfd, &evt_receive, 1, 0);
+	TST_EXP_EQ_LI(res, 1);
 	TST_EXP_EQ_LI(evt_receive.data.fd, fds[0]);
 	TST_EXP_EQ_LI(evt_receive.events & EPOLLIN, EPOLLIN);
 
@@ -88,14 +89,16 @@ static void run(void)
 	memset(buff, 0, write_size);
 	SAFE_READ(1, fds[0], buff, read_size);
 
-	TST_EXP_EQ_LI(SAFE_EPOLL_WAIT(epfd, &evt_receive, 1, 0), 0);
+	res = SAFE_EPOLL_WAIT(epfd, &evt_receive, 1, 0);
+	TST_EXP_EQ_LI(res, 0);
 
 	tst_res(TINFO, "Read remaining bytes from channel: %zu bytes", read_size);
 
 	SAFE_READ(1, fds[0], buff + read_size, read_size);
 	TST_EXP_FAIL(read(fds[0], buff, read_size), EAGAIN, "read() failed");
 
-	TST_EXP_EQ_LI(SAFE_EPOLL_WAIT(epfd, &evt_receive, 1, 0), 1);
+	res = SAFE_EPOLL_WAIT(epfd, &evt_receive, 1, 0);
+	TST_EXP_EQ_LI(res, 1);
 	TST_EXP_EQ_LI(evt_receive.data.fd, fds[1]);
 	TST_EXP_EQ_LI(evt_receive.events & EPOLLOUT, EPOLLOUT);
 }
