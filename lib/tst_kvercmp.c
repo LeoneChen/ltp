@@ -102,7 +102,9 @@ int tst_kvercmp(int r1, int r2, int r3)
 {
 	struct utsname uval;
 
-	uname(&uval);
+	//uname(&uval);
+	/* Hack the uname kernel version to 4.19.1 to make it work on Occlum */
+	strcpy(uval.release, "4.19.1");
 
 	return tst_kvcmp(uval.release, r1, r2, r3);
 }
