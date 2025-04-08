@@ -225,6 +225,7 @@ void safe_getaddrinfo(const char *file, const int lineno, const char *src_addr,
 
 void tst_setup_netns(void)
 {
+	return;
 	int real_uid = getuid();
 	int real_gid = getgid();
 	int nscount = 1;

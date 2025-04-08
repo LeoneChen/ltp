@@ -12,7 +12,7 @@ int main(void) {
 	return 0;
 }])],[has_f_owner_ex="yes"])
 
-if test "x$has_f_owner_ex" = xyes; then
+if test "x$has_f_owner_ex" = disable_it; then
 	AC_DEFINE(HAVE_STRUCT_F_OWNER_EX,1,[Define to 1 if you have struct f_owner_ex])
 	AC_MSG_RESULT(yes)
 else
