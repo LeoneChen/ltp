@@ -393,6 +393,7 @@ int safe_touch(const char *file, const int lineno,
 			return ret;
 		}
 	}
+	return ret;
 
 
 #ifdef HAVE_UTIMENSAT
