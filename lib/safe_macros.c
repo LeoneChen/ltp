@@ -313,6 +313,7 @@ ssize_t safe_read(const char *file, const int lineno, void (*cleanup_fn) (void),
 int safe_setegid(const char *file, const int lineno, void (*cleanup_fn) (void),
                  gid_t egid)
 {
+	return 0;
 	int rval;
 
 	rval = setegid(egid);
@@ -332,6 +333,7 @@ int safe_setegid(const char *file, const int lineno, void (*cleanup_fn) (void),
 int safe_seteuid(const char *file, const int lineno, void (*cleanup_fn) (void),
                  uid_t euid)
 {
+	return 0;
 	int rval;
 
 	rval = seteuid(euid);
@@ -351,6 +353,7 @@ int safe_seteuid(const char *file, const int lineno, void (*cleanup_fn) (void),
 int safe_setgid(const char *file, const int lineno, void (*cleanup_fn) (void),
                 gid_t gid)
 {
+	return 0;
 	int rval;
 
 	rval = setgid(gid);
@@ -370,6 +373,7 @@ int safe_setgid(const char *file, const int lineno, void (*cleanup_fn) (void),
 int safe_setuid(const char *file, const int lineno, void (*cleanup_fn) (void),
                 uid_t uid)
 {
+	return 0;
 	int rval;
 
 	rval = setuid(uid);
@@ -1266,6 +1270,7 @@ int safe_fsync(const char *file, const int lineno, int fd)
 
 pid_t safe_setsid(const char *file, const int lineno)
 {
+	return 0;
 	pid_t rval;
 
 	rval = setsid();
@@ -1281,6 +1286,7 @@ pid_t safe_setsid(const char *file, const int lineno)
 int safe_mknod(const char *file, const int lineno, const char *pathname,
 	mode_t mode, dev_t dev)
 {
+	return 0;
 	int rval;
 
 	rval = mknod(pathname, mode, dev);

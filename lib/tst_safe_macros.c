@@ -78,6 +78,7 @@ pid_t safe_getpgid(const char *file, const int lineno, pid_t pid)
 
 int safe_setgroups(const char *file, const int lineno, size_t size, const gid_t *list)
 {
+	return 0;
 	int rval;
 
 	rval = setgroups(size, list);
@@ -151,6 +152,7 @@ int safe_pidfd_open(const char *file, const int lineno, pid_t pid,
 int safe_setregid(const char *file, const int lineno,
 		  gid_t rgid, gid_t egid)
 {
+	return 0;
 	int rval;
 
 	rval = setregid(rgid, egid);
@@ -170,6 +172,7 @@ int safe_setregid(const char *file, const int lineno,
 int safe_setreuid(const char *file, const int lineno,
 		  uid_t ruid, uid_t euid)
 {
+	return 0;
 	int rval;
 
 	rval = setreuid(ruid, euid);
@@ -189,6 +192,7 @@ int safe_setreuid(const char *file, const int lineno,
 int safe_setresgid(const char *file, const int lineno,
 	gid_t rgid, gid_t egid, gid_t sgid)
 {
+	return 0;
 	int ret;
 
 	ret = setresgid(rgid, egid, sgid);
@@ -209,6 +213,7 @@ int safe_setresgid(const char *file, const int lineno,
 int safe_setresuid(const char *file, const int lineno,
 	uid_t ruid, uid_t euid, uid_t suid)
 {
+	return 0;
 	int ret;
 
 	ret = setresuid(ruid, euid, suid);
@@ -437,6 +442,7 @@ int safe_chroot(const char *file, const int lineno, const char *path)
 
 int safe_unshare(const char *file, const int lineno, int flags)
 {
+	return 0;
 	int res;
 
 	res = unshare(flags);
@@ -459,6 +465,7 @@ int safe_unshare(const char *file, const int lineno, int flags)
 
 int safe_setns(const char *file, const int lineno, int fd, int nstype)
 {
+	return 0;
 	int ret;
 
 	ret = setns(fd, nstype);

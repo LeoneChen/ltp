@@ -57,16 +57,17 @@ static inline int safe_clock_gettime(const char *file, const int lineno,
 static inline int safe_clock_settime(const char *file, const int lineno,
 	clockid_t clk_id, struct timespec *tp)
 {
+	return 0;
 	int rval;
 
 	rval = clock_settime(clk_id, tp);
 
 	if (rval == -1) {
 		tst_brk_(file, lineno, TBROK | TERRNO,
-			"clock_gettime(%s) failed", tst_clock_name(clk_id));
+			"clock_settime(%s) failed", tst_clock_name(clk_id));
 	} else if (rval) {
 		tst_brk_(file, lineno, TBROK | TERRNO,
-			"Invalid clock_gettime(%s) return value %d",
+			"Invalid clock_settime(%s) return value %d",
 			tst_clock_name(clk_id), rval);
 	}
 

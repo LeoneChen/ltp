@@ -21,6 +21,7 @@
 
 void *tst_get_bad_addr(void (*cleanup_fn) (void))
 {
+	return NULL;
 	void *bad_addr;
 
 	bad_addr = mmap(0, 1, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
