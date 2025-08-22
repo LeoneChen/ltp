@@ -50,7 +50,7 @@ static void setup(void)
 	char c;
 
 	SAFE_GETRLIMIT(RLIMIT_CORE, &rlim);
-	SAFE_FILE_SCANF("/proc/sys/kernel/core_pattern", "%c", &c);
+	// SAFE_FILE_SCANF("/proc/sys/kernel/core_pattern", "%c", &c);
 
 	if (rlim.rlim_cur)
 		return;

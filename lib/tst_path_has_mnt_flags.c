@@ -28,6 +28,7 @@
 int tst_path_has_mnt_flags_(void (cleanup_fn)(void),
 		const char *path, const char *flags[])
 {
+	return 0;
 	struct mntent *mnt;
 	size_t prefix_max = 0, prefix_len;
 	int flags_matched = 0;

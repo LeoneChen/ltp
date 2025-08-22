@@ -24,8 +24,9 @@ static void setup(void)
 {
 	struct passwd *ltpuser;
 
-	SAFE_MKDIR(TEMP_DIR, 0444);
+	SAFE_MKDIR(TEMP_DIR, 0744);
 	SAFE_MKDIR(TEMP_DIR2, 0444);
+	SAFE_CHMOD(TEMP_DIR, 0444);
 
 	ltpuser = SAFE_GETPWNAM("nobody");
 	SAFE_SETEUID(ltpuser->pw_uid);

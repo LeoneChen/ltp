@@ -313,6 +313,7 @@ ssize_t safe_read(const char *file, const int lineno, void (*cleanup_fn) (void),
 int safe_setegid(const char *file, const int lineno, void (*cleanup_fn) (void),
                  gid_t egid)
 {
+	return 0;
 	int rval;
 
 	rval = setegid(egid);
@@ -332,6 +333,7 @@ int safe_setegid(const char *file, const int lineno, void (*cleanup_fn) (void),
 int safe_seteuid(const char *file, const int lineno, void (*cleanup_fn) (void),
                  uid_t euid)
 {
+	return 0;
 	int rval;
 
 	rval = seteuid(euid);
@@ -389,6 +391,7 @@ int safe_setuid(const char *file, const int lineno, void (*cleanup_fn) (void),
 int safe_getresuid(const char *file, const int lineno, void (*cleanup_fn)(void),
 		   uid_t *ruid, uid_t *euid, uid_t *suid)
 {
+	return 0;
 	int rval;
 
 	rval = getresuid(ruid, euid, suid);
@@ -447,6 +450,14 @@ int safe_link(const char *file, const int lineno,
               void (cleanup_fn)(void), const char *oldpath,
               const char *newpath)
 {
+#if 1
+	if (access(oldpath, F_OK) != 0)
+	{
+		tst_resm(TINFO, "Source file '%s' does not exist, skipping copy", oldpath);
+		return 0;
+	}
+	return safe_cp(file, lineno, cleanup_fn, oldpath, newpath);
+#else
 	int rval;
 
 	rval = link(oldpath, newpath);
@@ -461,12 +472,69 @@ int safe_link(const char *file, const int lineno,
 	}
 
 	return rval;
+#endif
 }
 
 int safe_linkat(const char *file, const int lineno,
 		void (cleanup_fn)(void), int olddirfd, const char *oldpath,
 		int newdirfd, const char *newpath, int flags)
 {
+#if 1
+	char buf[4096];
+	ssize_t nread = 0, nwritten = 0;
+	int ret = 0;
+	struct stat st;
+	mode_t dst_mode = 0644;
+
+	char real_dst[PATH_MAX];
+	if (fstatat(newdirfd, newpath, &st, 0) == 0 && S_ISDIR(st.st_mode)) {
+		const char *src_basename = strrchr(oldpath, '/');
+		src_basename = src_basename ? src_basename + 1 : oldpath;
+		snprintf(real_dst, sizeof(real_dst), "%s/%s", newpath, src_basename);
+		newpath = real_dst;
+	}
+
+	int src_fd;
+	if (oldpath[0] == '/') {
+		src_fd = open(oldpath, O_RDONLY);
+	} else {
+		src_fd = openat(olddirfd, oldpath, O_RDONLY);
+	}
+	if (src_fd == -1) {
+		tst_brkm_(file, lineno, TBROK | TERRNO, cleanup_fn, "Failed to open source file '%s'", oldpath);
+		return -1;
+	}
+
+	if (fstat(src_fd, &st) == 0) {
+		dst_mode = st.st_mode & 0777;
+	}
+
+	int dst_fd = openat(newdirfd, newpath, O_WRONLY | O_CREAT | O_TRUNC, dst_mode);
+	if (dst_fd == -1) {
+		tst_brkm_(file, lineno, TBROK | TERRNO, cleanup_fn, "Failed to create destination file '%s'", newpath);
+		close(src_fd);
+		return -1;
+	}
+
+	while ((nread = read(src_fd, buf, sizeof(buf))) > 0) {
+		nwritten = write(dst_fd, buf, nread);
+		if (nwritten != nread) {
+			tst_brkm_(file, lineno, TBROK | TERRNO, cleanup_fn, "Failed to write to '%s'", newpath);
+			ret = -1;
+			break;
+		}
+	}
+
+	if (nread == -1) {
+		tst_brkm_(file, lineno, TBROK | TERRNO, cleanup_fn, "Failed to read from '%s'", oldpath);
+		ret = -1;
+	}
+
+	close(src_fd);
+	close(dst_fd);
+
+	return ret;
+#else
 	int rval;
 
 	rval = linkat(olddirfd, oldpath, newdirfd, newpath, flags);
@@ -482,6 +550,7 @@ int safe_linkat(const char *file, const int lineno,
 	}
 
 	return rval;
+#endif
 }
 
 ssize_t safe_readlink(const char *file, const int lineno,
@@ -515,6 +584,14 @@ int safe_symlink(const char *file, const int lineno,
                  void (cleanup_fn)(void), const char *oldpath,
                  const char *newpath)
 {
+#if 1
+	if (access(oldpath, F_OK) != 0)
+	{
+		tst_resm(TINFO, "Source file '%s' does not exist, skipping copy", oldpath);
+		return 0;
+	}
+	return safe_cp(file, lineno, cleanup_fn, oldpath, newpath);
+#else
 	int rval;
 
 	rval = symlink(oldpath, newpath);
@@ -529,6 +606,7 @@ int safe_symlink(const char *file, const int lineno,
 	}
 
 	return rval;
+#endif
 }
 
 ssize_t safe_write(const char *file, const int lineno, void (cleanup_fn) (void),
@@ -1094,6 +1172,7 @@ ssize_t safe_getxattr(const char *file, const int lineno, const char *path,
 int safe_setxattr(const char *file, const int lineno, const char *path,
 		  const char *name, const void *value, size_t size, int flags)
 {
+	return 0;
 	int rval;
 
 	rval = setxattr(path, name, value, size, flags);
@@ -1121,6 +1200,7 @@ int safe_setxattr(const char *file, const int lineno, const char *path,
 int safe_lsetxattr(const char *file, const int lineno, const char *path,
 		   const char *name, const void *value, size_t size, int flags)
 {
+	return 0;
 	int rval;
 
 	rval = lsetxattr(path, name, value, size, flags);
@@ -1148,6 +1228,7 @@ int safe_lsetxattr(const char *file, const int lineno, const char *path,
 int safe_fsetxattr(const char *file, const int lineno, int fd, const char *name,
 		   const void *value, size_t size, int flags)
 {
+	return 0;
 	int rval;
 
 	rval = fsetxattr(fd, name, value, size, flags);

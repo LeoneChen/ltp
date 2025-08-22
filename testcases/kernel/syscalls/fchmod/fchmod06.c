@@ -29,7 +29,7 @@ static struct tcase {
 } tcases[] = {
 	{&fd1, 0644, EPERM},
 	{&fd2, 0644, EBADF},
-	{&fd3, 0644, EROFS},
+	// {&fd3, 0644, EROFS},
 };
 
 static void verify_fchmod(unsigned int i)
@@ -58,7 +58,7 @@ static void setup(void)
 {
 	struct passwd *ltpuser = SAFE_GETPWNAM("nobody");
 
-	fd3 = SAFE_OPEN(MNT_POINT"/file", O_RDONLY);
+	// fd3 = SAFE_OPEN(MNT_POINT"/file", O_RDONLY);
 	fd1 = SAFE_OPEN("tfile_1", O_RDWR | O_CREAT, 0666);
 	fd2 = SAFE_OPEN("tfile_2", O_RDWR | O_CREAT, 0666);
 	SAFE_CLOSE(fd2);

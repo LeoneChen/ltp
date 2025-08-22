@@ -63,10 +63,10 @@ static inline int safe_clock_settime(const char *file, const int lineno,
 
 	if (rval == -1) {
 		tst_brk_(file, lineno, TBROK | TERRNO,
-			"clock_gettime(%s) failed", tst_clock_name(clk_id));
+			"clock_settime(%s) failed", tst_clock_name(clk_id));
 	} else if (rval) {
 		tst_brk_(file, lineno, TBROK | TERRNO,
-			"Invalid clock_gettime(%s) return value %d",
+			"Invalid clock_settime(%s) return value %d",
 			tst_clock_name(clk_id), rval);
 	}
 

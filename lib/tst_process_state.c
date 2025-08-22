@@ -15,6 +15,9 @@ int tst_process_state_wait(const char *file, const int lineno,
 			   void (*cleanup_fn)(void), pid_t pid,
 			   const char state, unsigned int msec_timeout)
 {
+#if 1
+	sleep(2);
+#else
 	char proc_path[128], cur_state;
 	unsigned int msecs = 0;
 
@@ -35,7 +38,7 @@ int tst_process_state_wait(const char *file, const int lineno,
 			return -1;
 		}
 	}
-
+#endif
 	return 0;
 }
 

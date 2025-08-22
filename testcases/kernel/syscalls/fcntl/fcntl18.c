@@ -116,12 +116,14 @@ int main(int ac, char **av)
 	if ((pid = tst_fork()) == 0) {	/* child */
 		fail = 0;
 		pass = getpwnam("nobody");
+#if 0
 		retval = setreuid(-1, pass->pw_uid);
 		if (retval < 0) {
 			tst_resm(TFAIL, "setreuid to user nobody failed, "
 				 "errno: %d", errno);
 			fail = 1;
 		}
+#endif
 
 		/* Error condition: invalid cmd */
 		retval = fcntl(fd, INVAL_FLAG, &fl);

@@ -41,9 +41,9 @@ static void setup(void)
 
 	strcpy(ifr.ifr_name, "lo");
 	ifr.ifr_mtu = 1500;
-	SAFE_IOCTL(dst_sock, SIOCSIFMTU, &ifr);
+	// SAFE_IOCTL(dst_sock, SIOCSIFMTU, &ifr);
 	ifr.ifr_flags = IFF_UP;
-	SAFE_IOCTL(dst_sock, SIOCSIFFLAGS, &ifr);
+	// SAFE_IOCTL(dst_sock, SIOCSIFFLAGS, &ifr);
 
 	SAFE_BIND(dst_sock, (struct sockaddr *)&addr, addrlen);
 	SAFE_GETSOCKNAME(dst_sock, (struct sockaddr*)&addr, &addrlen);

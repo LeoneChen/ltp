@@ -44,8 +44,10 @@ static void test_cached_pages(const int num_pages)
 	cs_range->len = file_size;
 
 	SAFE_FTRUNCATE(fd, file_size);
+	void *mapped_addr = SAFE_MMAP(NULL, file_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 	for (int i = 0; i < num_pages; i++)
-		SAFE_WRITE(0, fd, page_data, page_size);
+		memcpy(mapped_addr + (i * page_size), page_data, page_size);
+		// SAFE_WRITE(0, fd, page_data, page_size);
 
 	memset(cs, 0xff, sizeof(*cs));
 

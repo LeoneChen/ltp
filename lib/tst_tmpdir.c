@@ -82,6 +82,8 @@
  */
 #define DIR_MODE	(S_IRWXU|S_IRWXG|S_IRWXO)
 
+#define NO_FUTEX 2
+
 #ifndef PATH_MAX
 #ifdef MAXPATHLEN
 #define PATH_MAX	MAXPATHLEN
@@ -99,7 +101,12 @@ static char *TESTDIR;	/* the directory created */
 static char test_start_work_dir[PATH_MAX];
 
 /* lib/tst_checkpoint.c */
+#if (NO_FUTEX == 1)
+extern int *tst_socks;
+extern unsigned int tst_max_socks;
+#else
 extern futex_t *tst_futexes;
+#endif
 
 static int rmobj(const char *obj, char **errmsg);
 
@@ -331,6 +338,14 @@ void tst_rmdir(void)
 		return;
 	}
 
+#if (NO_FUTEX == 1)
+	if (tst_socks) {
+		for (int i = 0; i < tst_max_socks; i++) {
+			close(tst_socks[i]);
+		}
+		free(tst_socks);
+	}
+#else
 	/*
 	 * Unmap the backend file.
 	 * This is needed to overcome the NFS "silly rename" feature.
@@ -339,6 +354,7 @@ void tst_rmdir(void)
 		msync((void *)tst_futexes, getpagesize(), MS_SYNC);
 		munmap((void *)tst_futexes, getpagesize());
 	}
+#endif
 
 	/*
 	 * Attempt to remove the "TESTDIR" directory, using rmobj().

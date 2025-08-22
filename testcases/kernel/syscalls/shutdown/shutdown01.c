@@ -49,7 +49,9 @@ static void run_server(void)
 
 	tst_res(TINFO, "Running server on socket file");
 
-	TST_CHECKPOINT_WAKE_AND_WAIT(0);
+	TST_CHECKPOINT_WAKE(0);
+	SAFE_ACCEPT(server_sock, NULL, NULL);
+	TST_CHECKPOINT_WAIT(0);
 
 	SAFE_CLOSE(server_sock);
 	SAFE_UNLINK(SOCKETFILE);

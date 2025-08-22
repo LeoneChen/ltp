@@ -308,6 +308,68 @@ void safe_try_file_printf(const char *file, const int lineno,
 int safe_cp(const char *file, const int lineno,
 	     void (*cleanup_fn) (void), const char *src, const char *dst)
 {
+#if 1
+	char buf[4096];
+	ssize_t nread = 0, nwritten = 0;
+	int ret = 0;
+	struct stat st;
+	char real_dst[PATH_MAX];
+	mode_t dst_mode = 0644;
+
+	if (stat(dst, &st) == 0 && S_ISDIR(st.st_mode))
+	{
+		const char *src_basename = strrchr(src, '/');
+		src_basename = src_basename ? src_basename + 1 : src;
+		snprintf(real_dst, sizeof(real_dst), "%s/%s", dst, src_basename);
+		dst = real_dst;
+	}
+
+	int src_fd = open(src, O_RDONLY);
+	if (src_fd == -1)
+	{
+		tst_brkm_(file, lineno, TBROK, cleanup_fn,
+				  "Failed to open source file '%s': %s", src, strerror(errno));
+		return -1;
+	}
+
+	if (stat(src, &st) == 0)
+	{
+		dst_mode = st.st_mode & 0777;
+	}
+	int dst_fd = open(dst, O_WRONLY | O_CREAT | O_TRUNC, dst_mode);
+	if (dst_fd == -1)
+	{
+		tst_brkm_(file, lineno, TBROK, cleanup_fn,
+				  "Failed to create destination file '%s': %s", dst,
+				  strerror(errno));
+		close(src_fd);
+		return -1;
+	}
+
+	while ((nread = read(src_fd, buf, sizeof(buf))) > 0)
+	{
+		nwritten = write(dst_fd, buf, nread);
+		if (nwritten != nread)
+		{
+			tst_brkm_(file, lineno, TBROK, cleanup_fn, "Failed to write to '%s': %s",
+					  dst, strerror(errno));
+			ret = -1;
+			break;
+		}
+	}
+
+	if (nread == -1)
+	{
+		tst_brkm_(file, lineno, TBROK, cleanup_fn, "Failed to read from '%s': %s",
+				  src, strerror(errno));
+		ret = -1;
+	}
+
+	close(src_fd);
+	close(dst_fd);
+
+	return ret;
+#else
 	size_t len = strlen(src) + strlen(dst) + 16;
 	char buf[len];
 	int ret;
@@ -323,6 +385,7 @@ int safe_cp(const char *file, const int lineno,
 	}
 
 	return 0;
+#endif
 }
 
 #ifndef HAVE_UTIMENSAT
@@ -393,6 +456,7 @@ int safe_touch(const char *file, const int lineno,
 			return ret;
 		}
 	}
+	return ret;
 
 
 #ifdef HAVE_UTIMENSAT

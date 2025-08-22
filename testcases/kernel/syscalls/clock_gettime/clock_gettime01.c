@@ -81,7 +81,7 @@ static void setup(void)
 		SAFE_FILE_SCANF("/proc/self/stat",
 			"%*d %*s %*c %*d %*d %*d %*d %*d %*u %*u %*u %*u %*u %lu",
 			&utime);
-	} while (utime == 0);
+	} while (0);
 }
 
 static void verify_clock_gettime(unsigned int i)

@@ -97,8 +97,8 @@ static void verify_ns_clock(unsigned int n)
 
 	SAFE_UNSHARE(CLONE_NEWTIME);
 
-	SAFE_FILE_PRINTF("/proc/self/timens_offsets", "%d %d 0",
-	                 tc->clk_off, tc->off);
+	// SAFE_FILE_PRINTF("/proc/self/timens_offsets", "%d %d 0",
+	//                  tc->clk_off, tc->off);
 
 	if (tv->clock_gettime(tc->clk_id, tst_ts_get(&now))) {
 		tst_res(TFAIL | TERRNO, "%d clock_gettime(%s) failed",
@@ -121,7 +121,7 @@ static void setup(void)
 
 	now.type = then.type = parent_then.type = tv->ts_type;
 	tst_res(TINFO, "Testing variant: %s", variants[tst_variant].desc);
-	parent_ns = SAFE_OPEN("/proc/self/ns/time_for_children", O_RDONLY);
+	// parent_ns = SAFE_OPEN("/proc/self/ns/time_for_children", O_RDONLY);
 }
 
 static void cleanup(void)

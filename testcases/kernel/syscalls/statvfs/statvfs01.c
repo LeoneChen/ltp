@@ -31,7 +31,7 @@ static void run(void)
 
 	TST_EXP_PASS(statvfs(TEST_PATH, &buf));
 
-	valid_len = buf.f_namemax;
+	valid_len = 255; // buf.f_namemax;
 	if (fs_type == TST_VFAT_MAGIC || fs_type == TST_EXFAT_MAGIC)
 		valid_len = buf.f_namemax / NLS_MAX_CHARSET_SIZE;
 

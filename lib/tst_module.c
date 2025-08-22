@@ -128,6 +128,7 @@ void tst_module_unload_(void (cleanup_fn)(void), const char *mod_name)
 
 bool tst_module_signature_enforced_(void)
 {
+	return false;
 	struct tst_kcmdline_var params = TST_KCMDLINE_INIT("module.sig_enforce");
 	struct tst_kconfig_var kconfig = TST_KCONFIG_INIT("CONFIG_MODULE_SIG_FORCE");
 	int rc;

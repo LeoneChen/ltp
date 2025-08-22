@@ -73,13 +73,14 @@ static void verify_faccessat2(unsigned int i)
 
 static void setup(void)
 {
-	SAFE_MKDIR(TESTDIR, 0666);
+	SAFE_MKDIR(TESTDIR, 0766);
 	SAFE_TOUCH(RELPATH, 0444, NULL);
 
 	fd = SAFE_OPEN(RELPATH, O_RDONLY);
 	bad_path = tst_get_bad_addr(NULL);
 
 	ltpuser = SAFE_GETPWNAM(TESTUSER);
+	SAFE_CHMOD(TESTDIR, 0666);
 }
 
 static void cleanup(void)

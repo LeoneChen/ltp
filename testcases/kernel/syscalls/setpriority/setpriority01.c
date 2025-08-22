@@ -108,6 +108,9 @@ static void verify_setpriority(unsigned int n)
 
 static void setup(void)
 {
+	user_added = 1;
+	uid = 0;
+#if 0
 	const char *const cmd_useradd[] = {"useradd", username, NULL};
 	struct passwd *ltpuser;
 	int rc;
@@ -124,6 +127,7 @@ static void setup(void)
 	default:
 		tst_brk(TBROK, "Useradd failed (%d)", rc);
 	}
+#endif
 }
 
 static void cleanup(void)

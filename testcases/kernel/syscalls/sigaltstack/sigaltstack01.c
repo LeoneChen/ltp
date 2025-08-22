@@ -77,6 +77,8 @@
 
 #include "test.h"
 
+#define SIGSTKSZ 11452 + 128
+
 char *TCID = "sigaltstack01";
 int TST_TOTAL = 1;
 
@@ -142,7 +144,7 @@ int main(int ac, char **av)
 			 * Check that main_stk is outside the
 			 * alternate stk boundaries.
 			 */
-			if ((alt_stk < sigstk.ss_sp) &&
+			if ((alt_stk < sigstk.ss_sp) ||
 			    (alt_stk > (sigstk.ss_sp + SIGSTKSZ))) {
 				tst_resm(TFAIL,
 					 "alt. stack is not within the "

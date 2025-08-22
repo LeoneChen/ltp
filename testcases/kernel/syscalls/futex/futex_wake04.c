@@ -113,8 +113,9 @@ static void wakeup_thread2(void)
 	SAFE_PTHREAD_CREATE(&th1, NULL, wait_thread1, NULL);
 	SAFE_PTHREAD_CREATE(&th2, NULL, wait_thread2, NULL);
 
-	while (wait_for_threads(2))
-		usleep(1000);
+	// while (wait_for_threads(2))
+	// 	usleep(1000);
+	sleep(5);
 
 	futex_wake(tv->fntype, futex2, 1, 0);
 	SAFE_PTHREAD_JOIN(th2, NULL);

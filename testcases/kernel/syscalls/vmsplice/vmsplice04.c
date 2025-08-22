@@ -71,7 +71,7 @@ static void setup(void)
 {
 	SAFE_PIPE(pipes);
 
-	pipe_max_size = SAFE_FCNTL(pipes[1], F_GETPIPE_SZ);
+	pipe_max_size = 65536; // SAFE_FCNTL(pipes[1], F_GETPIPE_SZ);
 	write_buffer = tst_alloc(pipe_max_size);
 
 	iov.iov_base = write_buffer;

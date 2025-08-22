@@ -62,7 +62,8 @@ static void do_test(unsigned int n)
 		return;
 	}
 
-	TST_PROCESS_STATE_WAIT(pid, 'S', 0);
+	// TST_PROCESS_STATE_WAIT(pid, 'S', 0);
+	sleep(2);
 	SAFE_KILL(pid, SIGKILL);
 	SAFE_WAITPID(pid, &res, 0);
 
