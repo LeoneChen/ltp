@@ -79,7 +79,7 @@ static inline void nodemask_set(nodemask_t * mask, int node)
 
 static char *whitespace = " \t";
 
-inline char *get_next_arg(char *args, char *nextarg)
+static inline char *get_next_arg(char *args, char *nextarg)
 {
 	return nextarg ? nextarg + strspn(nextarg, whitespace) : args + strnlen(args, CMDBUFSZ);
 }
