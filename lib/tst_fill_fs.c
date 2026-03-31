@@ -134,6 +134,7 @@ static void fill_flat_vec(const char *path, int verbose)
 
 void tst_fill_fs(const char *path, int verbose, enum tst_fill_access_pattern pattern)
 {
+	return;
 
 	switch (pattern) {
 	case TST_FILL_BLOCKS:

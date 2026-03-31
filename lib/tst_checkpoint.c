@@ -32,12 +32,30 @@
 
 #define DEFAULT_MSEC_TIMEOUT 10000
 
+#define NO_FUTEX 1
+#define SOCK_PATH_FMT "/tmp/gramine_checkpoint_%u.sock"
+
+#if (NO_FUTEX == 1)
+int *tst_socks = NULL;
+unsigned int tst_max_socks = 0;
+#else
 futex_t *tst_futexes;
 unsigned int tst_max_futexes;
+#endif
 
 void tst_checkpoint_init(const char *file, const int lineno,
                          void (*cleanup_fn)(void))
 {
+#if (NO_FUTEX == 1)
+	struct sockaddr_un addr;
+	int max_socks = 128;
+
+	if (tst_socks) {
+		tst_brkm_(file, lineno, TBROK, cleanup_fn,
+			"checkpoints already initialized");
+		return;
+	}
+#else
 	int fd;
 	unsigned int page_size;
 
@@ -46,6 +64,7 @@ void tst_checkpoint_init(const char *file, const int lineno,
 			"checkpoints already initialized");
 		return;
 	}
+#endif
 
 	/*
 	 * The parent test process is responsible for creating the temporary
@@ -65,6 +84,22 @@ void tst_checkpoint_init(const char *file, const int lineno,
 		return;
 	}
 
+#if (NO_FUTEX == 1)
+	tst_socks = SAFE_MALLOC(cleanup_fn, max_socks * sizeof(*tst_socks));
+	for (int i = 0; i < max_socks; i++) {
+		int listen_fd = SAFE_SOCKET(cleanup_fn, AF_UNIX, SOCK_STREAM, 0);
+
+		memset(&addr, 0, sizeof(addr));
+		addr.sun_family = AF_UNIX;
+		snprintf(addr.sun_path, sizeof(addr.sun_path), SOCK_PATH_FMT, i);
+		unlink(addr.sun_path);
+
+		SAFE_BIND(cleanup_fn, listen_fd, (struct sockaddr*)&addr, sizeof(addr));
+		SAFE_LISTEN(cleanup_fn, listen_fd, 128);
+		tst_socks[i] = listen_fd;
+	}
+	tst_max_socks = max_socks;
+#else
 	page_size = getpagesize();
 
 	fd = SAFE_OPEN(cleanup_fn, "checkpoint_futex_base_file",
@@ -78,10 +113,86 @@ void tst_checkpoint_init(const char *file, const int lineno,
 	tst_max_futexes = page_size / sizeof(uint32_t);
 
 	SAFE_CLOSE(cleanup_fn, fd);
+#endif
 }
 
 int tst_checkpoint_wait(unsigned int id, unsigned int msec_timeout)
 {
+#if (NO_FUTEX == 1)
+	int listen_fd = tst_socks[id], conn_fd;
+	char buf;
+	struct timeval timeout;
+	int ret;
+	fd_set rfds;
+
+	do{
+		FD_ZERO(&rfds);
+		FD_SET(listen_fd, &rfds);
+		timeout.tv_sec = msec_timeout / 1000;
+		timeout.tv_usec = (msec_timeout % 1000) * 1000;
+		ret = select(listen_fd + 1, &rfds, NULL, NULL, &timeout);
+	} while(ret == -1 && errno == EINTR);
+
+	if (ret <= 0) {
+		if (ret == 0) {
+			errno = ETIMEDOUT;
+		}
+		return -1;
+	}
+
+	conn_fd = accept(listen_fd, NULL, NULL);
+	if (conn_fd < 0) {
+		return -1;
+	}
+
+	do {
+		FD_ZERO(&rfds);
+		FD_SET(conn_fd, &rfds);
+		timeout.tv_sec = msec_timeout / 1000;
+		timeout.tv_usec = (msec_timeout % 1000) * 1000;
+		ret = select(conn_fd + 1, &rfds, NULL, NULL, &timeout);
+	} while(ret == -1 && errno == EINTR);
+
+	if (ret <= 0) {
+		if (ret == 0) {
+			errno = ETIMEDOUT;
+		}
+		goto err;
+	}
+
+	if (recv(conn_fd, &buf, 1, 0) != 1) {
+		goto err;
+	}
+	close(conn_fd);
+	return 0;
+err:
+	close(conn_fd);
+	return -1;
+#elif (NO_FUTEX == 2)
+	unsigned int waited = 0;
+
+	if (!tst_max_futexes)
+		tst_brkm(TBROK, NULL, "Set test.needs_checkpoints = 1");
+
+	if (id >= tst_max_futexes)
+	{
+		errno = EOVERFLOW;
+		return -1;
+	}
+
+	while (tst_futexes[id] == 0)
+	{
+		usleep(1000);
+		waited++;
+		if (msec_timeout && waited >= msec_timeout)
+		{
+			errno = ETIMEDOUT;
+			return -1;
+		}
+	}
+
+	return 0;
+#else
 	struct timespec timeout;
 	int ret;
 
@@ -102,11 +213,74 @@ int tst_checkpoint_wait(unsigned int id, unsigned int msec_timeout)
 	} while (ret == -1 && errno == EINTR);
 
 	return ret;
+#endif
 }
 
 int tst_checkpoint_wake(unsigned int id, unsigned int nr_wake,
                         unsigned int msec_timeout)
 {
+#if (NO_FUTEX == 1)
+	struct timeval timeout;
+	struct sockaddr_un addr;
+	char buf = 1;
+	fd_set write_fds;
+	int ret;
+	int conn_fd;
+
+	for (int i = 0; i < nr_wake; i++) {
+		conn_fd = socket(AF_UNIX, SOCK_STREAM, 0);
+		if (conn_fd < 0) {
+			return -1;
+		}
+
+		memset(&addr, 0, sizeof(addr));
+		addr.sun_family = AF_UNIX;
+		snprintf(addr.sun_path, sizeof(addr.sun_path), SOCK_PATH_FMT, id);
+
+		if (connect(conn_fd, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
+			goto err;
+		}
+
+		do {
+			FD_ZERO(&write_fds);
+			FD_SET(conn_fd, &write_fds);
+			timeout.tv_sec = msec_timeout / 1000;
+			timeout.tv_usec = (msec_timeout % 1000) * 1000;
+			ret = select(conn_fd + 1, NULL, &write_fds, NULL, &timeout);
+		} while(ret == -1 && errno == EINTR);
+
+		if (ret <= 0) {
+			if (ret == 0) {
+				errno = ETIMEDOUT;
+			}
+			goto err;
+		}
+
+		if (send(conn_fd, &buf, 1, 0) != 1) {
+			goto err;
+		}
+		close(conn_fd);
+	}
+	return 0;
+err:
+	close(conn_fd);
+	return -1;
+#elif (NO_FUTEX == 2)
+	if (!tst_max_futexes)
+		tst_brkm(TBROK, NULL, "Set test.needs_checkpoints = 1");
+
+	if (id >= tst_max_futexes)
+	{
+		errno = EOVERFLOW;
+		return -1;
+	}
+
+	tst_futexes[id] = 1;
+	sleep(1);
+	tst_futexes[id] = 0;
+
+	return 0;
+#else
 	unsigned int msecs = 0, waked = 0;
 
 	if (!tst_max_futexes)
@@ -134,6 +308,7 @@ int tst_checkpoint_wake(unsigned int id, unsigned int nr_wake,
 	}
 
 	return 0;
+#endif
 }
 
 void tst_safe_checkpoint_wait(const char *file, const int lineno,

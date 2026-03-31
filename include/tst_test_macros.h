@@ -390,12 +390,14 @@ const char *tst_errno_names(char *buf, const int *exp_errs, int exp_errs_cnt);
 } while (0)
 
 #define TST_EXP_EQ_LI(VAL_A, VAL_B) do {                                       \
-	TST_EXP_EQ_SILENT_(VAL_A, #VAL_A, VAL_B, #VAL_B, long long, "%lli");   \
+	long long _tst_val_a = VAL_A;                                              \
+	long long _tst_val_b = VAL_B;                                              \
+	TST_EXP_EQ_SILENT_(_tst_val_a, #VAL_A, _tst_val_b, #VAL_B, long long, "%lli");   \
 								               \
 	if (TST_PASS) {                                                        \
 		tst_res_(__FILE__, __LINE__, TPASS,                            \
 			#VAL_A " == " #VAL_B " (%lli)",                        \
-			(long long)VAL_A);                                     \
+			(long long)_tst_val_a);                                \
 	}                                                                      \
 } while (0)
 
