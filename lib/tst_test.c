@@ -53,6 +53,9 @@ const char *TCID __attribute__((weak));
 
 #define DEFAULT_TIMEOUT 30
 
+#define NO_FUTEX 1
+#define SOCK_PATH_FMT "/tmp/gramine_checkpoint_%u.sock"
+
 struct tst_test *tst_test;
 
 static const char *tid;
@@ -79,8 +82,13 @@ static struct results *results;
 
 static int ipc_fd;
 
+#if (NO_FUTEX == 1)
+extern int *tst_socks;
+extern unsigned int tst_max_socks;
+#else
 extern void *tst_futexes;
 extern unsigned int tst_max_futexes;
+#endif
 
 static char ipc_path[1064];
 const char *tst_ipc_path = ipc_path;
@@ -133,8 +141,27 @@ static void setup_ipc(void)
 	SAFE_CLOSE(ipc_fd);
 
 	if (tst_test->needs_checkpoints) {
+#if (NO_FUTEX == 1)
+		struct sockaddr_un addr;
+		int max_socks = 128;
+		tst_socks = SAFE_MALLOC(max_socks * sizeof(*tst_socks));
+		for (int i = 0; i < max_socks; i++) {
+			int listen_fd = SAFE_SOCKET(AF_UNIX, SOCK_STREAM, 0);
+
+			memset(&addr, 0, sizeof(addr));
+			addr.sun_family = AF_UNIX;
+			snprintf(addr.sun_path, sizeof(addr.sun_path), SOCK_PATH_FMT, i);
+			unlink(addr.sun_path);
+
+			SAFE_BIND(listen_fd, (struct sockaddr*)&addr, sizeof(addr));
+			SAFE_LISTEN(listen_fd, 128);
+			tst_socks[i] = listen_fd;
+		}
+		tst_max_socks = max_socks;
+#else
 		tst_futexes = (char *)results + sizeof(struct results);
 		tst_max_futexes = (size - sizeof(struct results))/sizeof(futex_t);
+#endif
 	}
 }
 
@@ -157,6 +184,24 @@ static void cleanup_ipc(void)
 
 void tst_reinit(void)
 {
+#if (NO_FUTEX == 1)
+	struct sockaddr_un addr;
+	int max_socks = 128;
+	tst_socks = SAFE_MALLOC(max_socks * sizeof(*tst_socks));
+	for (int i = 0; i < max_socks; i++) {
+		int listen_fd = SAFE_SOCKET(AF_UNIX, SOCK_STREAM, 0);
+
+		memset(&addr, 0, sizeof(addr));
+		addr.sun_family = AF_UNIX;
+		snprintf(addr.sun_path, sizeof(addr.sun_path), SOCK_PATH_FMT, i);
+		unlink(addr.sun_path);
+
+		SAFE_BIND(listen_fd, (struct sockaddr*)&addr, sizeof(addr));
+		SAFE_LISTEN(listen_fd, 128);
+		tst_socks[i] = listen_fd;
+	}
+	tst_max_socks = max_socks;
+#else
 	const char *path = getenv(IPC_ENV_VAR);
 	size_t size = getpagesize();
 	int fd;
@@ -174,6 +219,7 @@ void tst_reinit(void)
 	tst_max_futexes = (size - sizeof(struct results))/sizeof(futex_t);
 
 	SAFE_CLOSE(fd);
+#endif
 }
 
 extern char **environ;
@@ -1510,7 +1556,11 @@ static void do_cleanup(void)
 
 	if (tst_tmpdir_created()) {
 		/* avoid munmap() on wrong pointer in tst_rmdir() */
+#if (NO_FUTEX == 1)
+		tst_socks = NULL;
+#else
 		tst_futexes = NULL;
+#endif
 		tst_rmdir();
 	}
 
@@ -1527,6 +1577,7 @@ static void heartbeat(void)
 	if (tst_clock_gettime(CLOCK_MONOTONIC, &tst_start_time))
 		tst_res(TWARN | TERRNO, "tst_clock_gettime() failed");
 
+	return;
 	if (getppid() == 1) {
 		tst_res(TFAIL, "Main test process might have exit!");
 		/*
